@@ -50,7 +50,19 @@ using (var scope = app.Services.CreateScope())
     {
         // Create and apply migrations if needed
         var dbContext = serviceProvider.GetRequiredService<AppDbContext>();
-        dbContext.Database.Migrate(); // Ensure migrations are applied
+
+        // Check if migrations exist
+        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+        if (pendingMigrations.Any())
+        {
+            // Apply migrations if they exist
+            await dbContext.Database.MigrateAsync();
+        }
+        else
+        {
+            // No migrations, just create the database
+            await dbContext.Database.EnsureCreatedAsync();
+        }
 
         // Seed data
         await DatabaseSeeder.InitializeAsync(serviceProvider);

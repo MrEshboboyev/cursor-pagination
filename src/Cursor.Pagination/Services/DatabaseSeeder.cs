@@ -13,15 +13,31 @@ public class DatabaseSeeder(ILogger<DatabaseSeeder> logger, AppDbContext dbConte
     public async Task SeedAsync()
     {
         // Check if we already have data
-        if (await dbContext.UserNotes.AnyAsync(_cancellationToken))
+        try
         {
-            logger.LogInformation("Database already contains data, skipping seeding");
-            return;
+            // Try to check if the table exists first
+            if (await dbContext.Database.CanConnectAsync(_cancellationToken))
+            {
+                // Ensure the database schema is created
+                await dbContext.Database.EnsureCreatedAsync(_cancellationToken);
+
+                // Only then check for existing data
+                if (await dbContext.UserNotes.AnyAsync(_cancellationToken))
+                {
+                    logger.LogInformation("Database already contains data, skipping seeding");
+                    return;
+                }
+            }
+        }
+        catch (PostgresException ex) when (ex.SqlState == "42P01") // Table doesn't exist
+        {
+            // Table doesn't exist yet, continue with creating it
+            logger.LogInformation("Database tables don't exist yet, creating schema");
         }
 
         logger.LogInformation("Starting database seeding...");
 
-        // Ensure the database is created
+        // Ensure the database and schema are created
         await dbContext.Database.EnsureCreatedAsync(_cancellationToken);
 
         // Seed users first (using regular EF Core since it's a smaller dataset)
@@ -83,7 +99,7 @@ public class DatabaseSeeder(ILogger<DatabaseSeeder> logger, AppDbContext dbConte
     }
 
     // Local cache of users for reference when generating notes
-    private List<User> Users { get; set; } = new();
+    private List<User> Users { get; set; } = [];
 
     private IEnumerable<UserNote> GenerateRecords(int count)
     {
