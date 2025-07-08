@@ -1,0 +1,29 @@
+services:
+  cursorpagination.milan:
+    image: ${DOCKER_REGISTRY-}cursorpaginationmilan
+    build:
+      context: .
+      dockerfile: src/CursorPagination.Milan/Dockerfile
+    ports:
+      - 3000:8080
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+
+  postgres:
+    image: postgres:17.2
+    environment:
+      POSTGRES_DB: cursor_pagination_milan
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./.containers/postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.0
+    environment:
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: true
+    ports:
+      - 18888:18888
