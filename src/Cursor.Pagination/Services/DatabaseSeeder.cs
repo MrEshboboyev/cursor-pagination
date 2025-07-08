@@ -6,9 +6,13 @@ using NpgsqlTypes;
 
 namespace CursorPagination.Services;
 
-public class DatabaseSeeder(ILogger<DatabaseSeeder> logger, AppDbContext dbContext, CancellationTokenSource cancellationTokenSource = default!)
+public class DatabaseSeeder(
+    ILogger<DatabaseSeeder> logger, 
+    AppDbContext dbContext, 
+    CancellationTokenSource cancellationTokenSource = default!)
 {
-    private readonly CancellationToken _cancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;
+    private readonly CancellationToken _cancellationToken = cancellationTokenSource?.Token 
+        ?? CancellationToken.None;
 
     public async Task SeedAsync()
     {
